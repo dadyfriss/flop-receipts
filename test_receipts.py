@@ -22,4 +22,9 @@ class ReceiptsTests(unittest.TestCase):
         self.data['messages'].append(copy.deepcopy(self.data['messages'][0]));self.assertEqual(inspect(self.data)['duplicate_envelopes'],1)
     def test_float_nonce(self):
         self.data['messages'][0]['nonce']=9007199254740992.0;self.assertEqual(inspect(self.data)['invalid'],1)
+    def test_invalid_export_shapes(self):
+        for value in (None, [], {}, {'room':'test','messages':None}, {'room':'test','messages':[None]}, {'room':'test','messages':['bad']}):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                inspect(value)
 if __name__=='__main__':unittest.main()
+

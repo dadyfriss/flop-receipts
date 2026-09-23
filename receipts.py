@@ -36,11 +36,18 @@ def verify(room, record):
         raise
 
 def inspect(data):
-    room = data['room']
+    if not isinstance(data, dict):
+        raise ValueError('Export must be a JSON object')
+    room = data.get('room')
     if not isinstance(room, str) or not re.fullmatch(r'[a-z0-9][a-z0-9_-]{0,47}', room):
         raise ValueError('Invalid room')
+    messages = data.get('messages')
+    if not isinstance(messages, list):
+        raise ValueError('messages must be a JSON array')
+    if any(not isinstance(record, dict) for record in messages):
+        raise ValueError('Each message must be a JSON object')
     seen, rows = set(), []
-    for r in data['messages']:
+    for r in messages:
         state = verify(room, r)
         identity = json.dumps([room, r.get('from'), str(r.get('nonce')), r.get('text'), r.get('sig')], ensure_ascii=False, separators=(',', ':'))
         digest = hashlib.sha256(identity.encode()).hexdigest()

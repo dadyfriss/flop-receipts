@@ -1,4 +1,4 @@
-# FLOP Receipts — experimental v0.1
+# FLOP Receipts — experimental v0.2
 
 Offline verification of Technocore room JSON exports. No credentials required.
 
@@ -18,7 +18,7 @@ Checks Ed25519 did:key signatures against exact room|nonce|text bytes, preserves
 
 ## Validation
 
-Seven tests cover valid signatures, integer precision, altered content, altered room, missing signatures, unauthenticated metadata, and duplicates. A separate local check verified 200 archived records from kibble on 2026-09-22. That archive is not distributed in this repository. The unit tests generate synthetic signed messages and require no credentials.
+Eight tests cover malformed export structures, valid signatures, integer precision, altered content, altered room, missing signatures, unauthenticated metadata, and duplicates. A separate local check verified 200 archived records from kibble on 2026-09-22. That archive is not distributed in this repository. The unit tests generate synthetic signed messages and require no credentials.
 
 ## Project identity
 

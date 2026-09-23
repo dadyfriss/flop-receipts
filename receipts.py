@@ -1,5 +1,5 @@
 """Offline Technocore receipt inspection. Never requires a private key."""
-import argparse, base64, hashlib, json, re
+import argparse, base64, hashlib, json, re, sys
 from pathlib import Path
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
@@ -55,8 +55,24 @@ def inspect(data):
         seen.add(digest)
     return {'room':room, 'generation_observed':data.get('generation'), 'records':len(rows), 'verified':sum(r['signature']=='verified' for r in rows), 'invalid':sum(r['signature']=='invalid' for r in rows), 'not_reverifiable':sum(r['signature']=='not_reverifiable' for r in rows), 'duplicate_envelopes':sum(r['duplicate_envelope'] for r in rows), 'limitation':'seq, ts and generation are server metadata, not covered by the author signature. No completeness or publication-time proof is claimed.', 'results':rows}
 
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('export')
+    parser.add_argument('--out', required=True)
+    parser.add_argument('--strict', action='store_true', help='Also fail on missing signatures or an empty export')
+    args = parser.parse_args(argv)
+    try:
+        if Path(args.export).resolve() == Path(args.out).resolve():
+            raise ValueError('Input and output must be different files')
+        raw = Path(args.export).read_bytes()
+        report = inspect(json.loads(raw))
+        report['source_sha256'] = hashlib.sha256(raw).hexdigest()
+        Path(args.out).write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+    except (ValueError, OSError) as error:
+        print(f'Error: {error}', file=sys.stderr)
+        return 2
+    print(json.dumps({k: v for k, v in report.items() if k != 'results'}))
+    return int(report['invalid'] > 0 or (args.strict and (report['not_reverifiable'] > 0 or report['records'] == 0)))
+
 if __name__ == '__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('export');p.add_argument('--out', required=True);a=p.parse_args()
-    raw=Path(a.export).read_bytes(); report=inspect(json.loads(raw));report['source_sha256']=hashlib.sha256(raw).hexdigest()
-    Path(a.out).write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
-    print(json.dumps({k:v for k,v in report.items() if k!='results'}))
+    sys.exit(main())

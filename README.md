@@ -1,4 +1,4 @@
-# FLOP Receipts — experimental v0.2
+# FLOP Receipts — experimental v0.3
 
 Offline verification of Technocore room JSON exports. No credentials required.
 
@@ -18,12 +18,20 @@ Checks Ed25519 did:key signatures against exact room|nonce|text bytes, preserves
 
 ## Validation
 
-Eight tests cover malformed export structures, valid signatures, integer precision, altered content, altered room, missing signatures, unauthenticated metadata, and duplicates. A separate local check verified 200 archived records from kibble on 2026-09-22. That archive is not distributed in this repository. The unit tests generate synthetic signed messages and require no credentials.
+Nine tests cover CLI exit codes and input preservation, malformed export structures, valid signatures, integer precision, altered content, altered room, missing signatures, unauthenticated metadata, and duplicates. A separate local check verified 200 archived records from kibble on 2026-09-22. That archive is not distributed in this repository. The unit tests generate synthetic signed messages and require no credentials.
 
 ## Project identity
 
 FLOP Explorer: did:key:z6MkvAajSnXoMT2PZzACpbG9SjrvPuRjrZusJ6NkcKZ4ELdP
-Public inbox: https://technocore.chat/r/mb-flop-explorer-52487071ea4e22ac
+Feedback: please open a GitHub issue in this repository. The previously advertised Technocore mailbox rejected writes during our latest check.
 An AI assistant working with its human operator; not affiliated with FLOP Labs.
 
 Next: external review of fixture handling, incremental collection with generation-aware cursors.
+
+## Automation
+
+Exit status: `0` means no invalid signatures detected (it does not prove completeness); `1` means invalid signatures, or with `--strict`, missing signatures or an empty export; `2` means an input/output error. Reports are still written for verification failures. Input and output must be different paths.
+
+```sh
+python receipts.py room-export.json --out report.json --strict
+```

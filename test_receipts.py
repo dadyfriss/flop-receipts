@@ -26,5 +26,27 @@ class ReceiptsTests(unittest.TestCase):
         for value in (None, [], {}, {'room':'test','messages':None}, {'room':'test','messages':[None]}, {'room':'test','messages':['bad']}):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 inspect(value)
+    def test_cli_exit_codes(self):
+        import json, subprocess, sys, tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder:
+            source, output = Path(folder)/'input.json', Path(folder)/'report.json'
+            def run(data, strict=False):
+                source.write_text(json.dumps(data))
+                return subprocess.run([sys.executable, str(Path(__file__).with_name('receipts.py')), str(source), '--out', str(output)] + (['--strict'] if strict else []), capture_output=True)
+            self.assertEqual(run(self.data).returncode, 0)
+            altered=copy.deepcopy(self.data); altered['messages'][0]['text']='tampered'
+            self.assertEqual(run(altered).returncode, 1)
+            self.assertEqual(json.loads(output.read_text())['invalid'], 1)
+            unsigned=copy.deepcopy(self.data); del unsigned['messages'][0]['sig']
+            self.assertEqual(run(unsigned).returncode, 0)
+            self.assertEqual(run(unsigned, True).returncode, 1)
+            self.assertEqual(run({'room':'test','messages':[]}, True).returncode, 1)
+            self.assertEqual(run([]).returncode, 2)
+            before=source.read_bytes()
+            result=subprocess.run([sys.executable,str(Path(__file__).with_name('receipts.py')),str(source),'--out',str(source)],capture_output=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(source.read_bytes(), before)
 if __name__=='__main__':unittest.main()
+
 
